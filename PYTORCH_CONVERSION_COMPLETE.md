@@ -51,6 +51,19 @@ This document provides a comprehensive overview of what has been converted from 
 
 **Reason**: The transformer-based score network provides equivalent functionality. Full GNN implementation would require PyTorch Geometric or similar library. This is marked as a future enhancement.
 
+**What IS implemented**:
+- ✅ GraphScoreNet class exists and accepts all config parameters
+- ✅ Falls back to transformer for score prediction (provides equivalent functionality)
+- ✅ All other graph-related features work (PBC in data augmentation)
+
+**What is NOT implemented**:
+- ❌ Actual graph construction (k-NN, kd-tree)
+- ❌ Message passing layers
+- ❌ PBC-aware graph distance calculations
+- ❌ Edge features and attention on graphs
+
+See `OPTIONAL_FEATURES_STATUS.md` for detailed breakdown of all optional features.
+
 ## ❌ Not Converted (Not Required for Core Functionality)
 
 ### Notebooks
