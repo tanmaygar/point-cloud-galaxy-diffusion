@@ -12,6 +12,7 @@
 ## Contents<!-- omit from toc -->
 
 - [Abstract](#abstract)
+- [PyTorch Implementation](#pytorch-implementation)
 - [Dependencies](#dependencies)
 - [Dataset](#dataset)
 - [Code overview](#code-overview)
@@ -22,6 +23,30 @@
 ## Abstract
 
 We introduce a diffusion-based generative model to describe the distribution of galaxies in our Universe directly as a collection of points in 3-D space (coordinates) optionally with associated attributes (e.g., velocities and masses), without resorting to binning or voxelization. The custom diffusion model can be used both for emulation, reproducing essential summary statistics of the galaxy distribution, as well as inference, by computing the conditional likelihood of a galaxy field. We demonstrate a first application to massive dark matter haloes in the _Quijote_ simulation suite. This approach can be extended to enable a comprehensive analysis of cosmological data, circumventing limitations inherent to summary statistics- as well as neural simulation-based inference methods.
+
+## PyTorch Implementation
+
+**🆕 A PyTorch implementation is now available!** See [PYTORCH_README.md](PYTORCH_README.md) for details.
+
+The PyTorch implementation provides:
+- Complete conversion of all models to PyTorch `nn.Module`
+- Native PyTorch `DataLoader` for efficient data loading
+- Standard PyTorch training loop with AdamW and cosine LR scheduling
+- Comprehensive test suite validating all functionality
+
+Quick start with PyTorch:
+```bash
+# Install PyTorch
+pip install torch torchvision torchaudio
+
+# Run tests
+python test_pytorch.py
+
+# Train model (update data path in config first)
+python train_torch.py --config configs/nbody_torch.yaml
+```
+
+The original JAX/Flax implementation remains available in the main codebase.
 
 ## Dependencies
 
@@ -41,16 +66,34 @@ The processed dark matter halo features from the _Quijote_ simulations used to t
 
 ## Code overview
 
+### JAX/Flax Implementation (Original)
 - The diffusion model is defined in [`models/diffusion.py`](models/diffusion.py), with auxiliary utilities (loss, sampling, noise schedules) in [`models/diffusion_utils.py`](models/diffusion_utils.py). The model is based on the [google-research/vdm](https://github.com/google-research/vdm) repo.
 - Score models are called from [`models/score.py`](models/score.py), with the transformer model defined in [`models/transformer.py`](models/transformer.py) and the GNN model in [`models/gnn.py`](models/gnn.py).
 
+### PyTorch Implementation (New)
+- The PyTorch diffusion model is in [`models/diffusion_torch.py`](models/diffusion_torch.py), with utilities in [`models/diffusion_utils_torch.py`](models/diffusion_utils_torch.py).
+- Score models are in [`models/scores_torch.py`](models/scores_torch.py), with transformer in [`models/transformer_torch.py`](models/transformer_torch.py) and MLPs in [`models/mlp_torch.py`](models/mlp_torch.py).
+- Data loading is handled by [`datasets_torch.py`](datasets_torch.py) with PyTorch DataLoader.
+- Training script: [`train_torch.py`](train_torch.py)
+
+See [PYTORCH_README.md](PYTORCH_README.md) for complete PyTorch documentation.
+
 ## Running the code
+
+### JAX/Flax (Original)
 
 With the dataset in place, the diffusion model can be trained via
 ``` sh
 python train.py --config ./configs/nbody.py
 ```
 which is called from `scripts/submit_train.sh`. The config file `./configs/nbody.py` (which sets diffusion, score model, and dataset configuration) can be edited accordingly. Similarly, `scripts/submit_infer.sh` computes the likelihood profiles for the trained model, calling `infer.py`.
+
+### PyTorch (New)
+
+With the dataset in place and path updated in `configs/nbody_torch.yaml`, train via:
+``` sh
+python train_torch.py --config ./configs/nbody_torch.yaml
+```
 
 The [`notebooks`](notebooks/) directory contains notebooks used to produce results for the paper, each linked from the respective figures. 
 
