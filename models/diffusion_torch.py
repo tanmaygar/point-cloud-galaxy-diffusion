@@ -152,8 +152,7 @@ class VariationalDiffusionModel(nn.Module):
         # Embedding for class and context
         if n_classes > 0:
             self.embedding_class = nn.Embedding(n_classes, d_context_embedding)
-        if embed_context:
-            self.embedding_context = nn.Linear(d_context_embedding, d_context_embedding)
+        self.embedding_context = None  # Will be initialized in forward pass
     
     def gammat(self, t):
         """Compute gamma(t) from noise schedule."""
@@ -169,6 +168,11 @@ class VariationalDiffusionModel(nn.Module):
             classes = conditioning[..., 0].long()
             cond = conditioning[..., 1:]
             class_embedding = self.embedding_class(classes)
+            
+            # Initialize context embedding if needed
+            if self.embedding_context is None:
+                self.embedding_context = nn.Linear(cond.shape[-1], self.d_context_embedding).to(conditioning.device)
+            
             context_embedding = self.embedding_context(cond)
             return class_embedding + context_embedding
         elif self.n_classes > 0 and conditioning.shape[-1] == 1:
@@ -177,6 +181,10 @@ class VariationalDiffusionModel(nn.Module):
             return self.embedding_class(classes)
         elif self.n_classes == 0:
             # Only conditioning
+            # Initialize context embedding if needed
+            if self.embedding_context is None:
+                self.embedding_context = nn.Linear(conditioning.shape[-1], self.d_context_embedding).to(conditioning.device)
+            
             return self.embedding_context(conditioning)
         else:
             return None
@@ -229,14 +237,17 @@ class VariationalDiffusionModel(nn.Module):
         T = self.timesteps
         
         if T == 0:
-            # Continuous time
-            # Compute gradient of gamma w.r.t. t
-            t_req_grad = t.clone().detach().requires_grad_(True)
-            g_t_grad = torch.autograd.grad(
-                self.gamma(t_req_grad).sum(),
-                t_req_grad,
-                create_graph=False,
-            )[0]
+            # Continuous time - compute gradient of gamma
+            # We need to compute d(gamma)/dt
+            # For linear schedule: gamma(t) = gamma_max + (gamma_min - gamma_max) * t
+            # So d(gamma)/dt = (gamma_min - gamma_max)
+            
+            # For learned schedules, we approximate the gradient
+            eps_val = 1e-3
+            with torch.no_grad():
+                g_t_plus = self.gamma(t + eps_val)
+                g_t_grad = (g_t_plus - g_t) / eps_val
+            
             loss_diff = -0.5 * g_t_grad[:, None, None] * loss_diff_mse
         else:
             # Discrete time

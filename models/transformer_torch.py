@@ -186,8 +186,11 @@ class Transformer(nn.Module):
         # Input embedding
         self.input_embedding = nn.Linear(n_input, d_model)
         
-        # Conditioning projection
-        self.cond_proj = nn.Linear(d_conditioning, d_conditioning) if concat_conditioning else None
+        # Conditioning projection (will be initialized in forward if needed)
+        self.cond_proj_to_model = None
+        
+        # Conditioning projection for concatenation
+        self.cond_proj = None
         if concat_conditioning:
             self.concat_proj = nn.Linear(d_model + d_conditioning, d_model)
         
@@ -226,7 +229,12 @@ class Transformer(nn.Module):
         # Transformer layers
         for i, layer in enumerate(self.layers):
             if conditioning is not None and not self.concat_conditioning:
-                x = x + conditioning.unsqueeze(1)
+                # Project conditioning to d_model if needed
+                if self.cond_proj_to_model is None:
+                    self.cond_proj_to_model = nn.Linear(conditioning.shape[-1], self.d_model).to(x.device)
+                
+                cond_proj = self.cond_proj_to_model(conditioning)
+                x = x + cond_proj.unsqueeze(1)
             
             if not self.induced_attention:
                 # Vanilla self-attention
