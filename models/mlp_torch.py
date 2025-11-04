@@ -12,25 +12,37 @@ class MLP(nn.Module):
         self,
         feature_sizes: Sequence[int],
         activation: Callable = nn.GELU,
+        input_size: int = None,
     ):
         super().__init__()
         self.feature_sizes = feature_sizes
         self.activation = activation()
+        self.input_size = input_size
         
+        if input_size is not None:
+            # Build network immediately if input size is known
+            self.net = self._build_network(input_size)
+        else:
+            # Will be built on first forward pass
+            self.net = None
+    
+    def _build_network(self, input_size):
+        """Build the MLP network."""
         layers = []
-        for i in range(len(feature_sizes) - 1):
-            layers.append(nn.Linear(feature_sizes[i] if i == 0 else feature_sizes[i-1], 
-                                   feature_sizes[i]))
-            if i < len(feature_sizes) - 2:  # No activation on final layer
+        prev_size = input_size
+        
+        for i, size in enumerate(self.feature_sizes):
+            layers.append(nn.Linear(prev_size, size))
+            if i < len(self.feature_sizes) - 1:  # No activation on final layer
                 layers.append(self.activation)
+            prev_size = size
         
-        # Add final layer without activation
-        if len(feature_sizes) > 1:
-            layers.append(nn.Linear(feature_sizes[-2], feature_sizes[-1]))
-        
-        self.net = nn.Sequential(*layers)
+        return nn.Sequential(*layers)
     
     def forward(self, x):
+        if self.net is None:
+            # Build network on first forward pass
+            self.net = self._build_network(x.shape[-1]).to(x.device)
         return self.net(x)
 
 
