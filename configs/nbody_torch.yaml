@@ -1,0 +1,104 @@
+# PyTorch configuration for nbody diffusion model
+# This is converted from configs/nbody.py
+
+# Wandb logging
+wandb:
+  entity: null
+  project: "set-diffusion-pytorch"
+  group: "cosmology"
+  job_type: "training"
+  name: null
+  log_train: true
+  workdir: "./checkpoints/"
+
+# Variational diffusion model
+vdm:
+  gamma_min: -8.0
+  gamma_max: 14.0
+  noise_schedule: "learned_linear"  # "linear", "learned_linear", or "learned_net"
+  noise_scale: 1.0e-3
+  timesteps: 0  # 0 for continuous-time VLB
+  embed_context: true
+  d_context_embedding: 16
+  d_t_embedding: 16  # Timestep embedding dimension
+  n_classes: 0
+  use_encdec: false
+
+# Encoder and decoder specification
+encoder:
+  d_hidden: 256
+  n_layers: 4
+  d_embedding: 12
+
+decoder:
+  d_hidden: 256
+  n_layers: 4
+
+# Transformer score model (uncomment to use)
+# score:
+#   score: "transformer"
+#   induced_attention: false
+#   n_inducing_points: 200
+#   d_model: 256
+#   d_mlp: 1024
+#   n_layers: 6
+#   n_heads: 4
+#   concat_conditioning: false
+#   d_conditioning: 256
+#   adanorm: false
+
+# Graph score model
+score:
+  score: "graph"
+  k: 20
+  n_pos_features: 3
+  num_mlp_layers: 4
+  latent_size: 16
+  hidden_size: 128
+  skip_connections: true
+  message_passing_steps: 4
+  attention: true
+  shared_weights: false
+  use_edges: true
+  use_pbc: true
+  use_absolute_distances: false
+  use_fourier_features: false
+  n_fourier_features: 16
+  graph_construction: "pairwise_dist"  # "kd_tree" or "pairwise_dist"
+  norm: "layer"  # "pair" or "layer" for LayerNorm or PairNorm
+  edge_skip_connections: false
+  relative_updates: true
+
+# Training
+training:
+  batch_size: 16  # Total batch size
+  n_train_steps: 301000
+  warmup_steps: 5000
+  log_every_steps: 100
+  eval_every_steps: 5000
+  save_every_steps: 5000
+  unconditional_dropout: false
+  p_uncond: 0.0
+
+# Data
+data:
+  dataset: "nbody"
+  data_dir: "/path/to/data"  # UPDATE THIS PATH
+  simulation_set: "lhc"  # "lhc", "fiducial", or "lhc+fiducial"
+  n_particles: 5000  # Number of particles to use
+  n_features: 7  # Number of features (3=pos, 6=pos+vel, 7=pos+vel+mass)
+  n_pos_features: 3  # Number of position features
+  box_size: 1000.0  # Simulation box size
+  add_augmentations: true
+  add_rotations: true
+  add_translations: true
+  conditioning_parameters: ["Omega_m", "sigma_8"]
+
+# Optimizer (AdamW)
+optim:
+  learning_rate: 3.0e-4
+  weight_decay: 1.0e-4
+  grad_clip: 0.5
+  lr_schedule: "cosine"
+
+seed: 52
