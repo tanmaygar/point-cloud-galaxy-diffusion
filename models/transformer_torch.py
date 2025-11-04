@@ -186,8 +186,9 @@ class Transformer(nn.Module):
         # Input embedding
         self.input_embedding = nn.Linear(n_input, d_model)
         
-        # Conditioning projection (will be initialized in forward if needed)
-        self.cond_proj_to_model = None
+        # Note: Conditioning projection is initialized dynamically in forward pass
+        # to handle variable conditioning dimensions from different configurations
+        self.cond_proj_to_model = None  # Will be initialized in forward pass
         
         # Conditioning projection for concatenation
         self.cond_proj = None

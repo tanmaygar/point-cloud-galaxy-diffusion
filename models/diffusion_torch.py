@@ -152,6 +152,8 @@ class VariationalDiffusionModel(nn.Module):
         # Embedding for class and context
         if n_classes > 0:
             self.embedding_class = nn.Embedding(n_classes, d_context_embedding)
+        # Note: embedding_context is initialized dynamically in forward pass
+        # to handle variable conditioning dimensions
         self.embedding_context = None  # Will be initialized in forward pass
     
     def gammat(self, t):

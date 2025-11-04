@@ -127,8 +127,9 @@ def train(config, workdir="./logging/"):
             return step / warmup_steps
         else:
             # Cosine decay
+            import math
             progress = (step - warmup_steps) / (n_train_steps - warmup_steps)
-            return 0.5 * (1 + torch.cos(torch.tensor(progress * 3.14159)))
+            return 0.5 * (1 + math.cos(progress * math.pi))
     
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
     
