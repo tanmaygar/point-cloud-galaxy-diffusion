@@ -26,12 +26,13 @@ We introduce a diffusion-based generative model to describe the distribution of 
 
 ## PyTorch Implementation
 
-**🆕 A PyTorch implementation is now available!** See [PYTORCH_README.md](PYTORCH_README.md) for details.
+**🆕 A complete PyTorch implementation is now available!** See [PYTORCH_README.md](PYTORCH_README.md) for details.
 
 The PyTorch implementation provides:
 - Complete conversion of all models to PyTorch `nn.Module`
 - Native PyTorch `DataLoader` for efficient data loading
 - Standard PyTorch training loop with AdamW and cosine LR scheduling
+- **Evaluation and inference utilities** for likelihood computation and sample generation
 - Comprehensive test suite validating all functionality
 
 Quick start with PyTorch:
@@ -44,6 +45,10 @@ python test_pytorch.py
 
 # Train model (update data path in config first)
 python train_torch.py --config configs/nbody_torch.yaml
+
+# Evaluate model
+python -c "from eval_torch import generate_test_samples_from_checkpoint; \
+           samples = generate_test_samples_from_checkpoint('checkpoint.pt', 10, 1000, 7)"
 ```
 
 The original JAX/Flax implementation remains available in the main codebase.
@@ -75,6 +80,8 @@ The processed dark matter halo features from the _Quijote_ simulations used to t
 - Score models are in [`models/scores_torch.py`](models/scores_torch.py), with transformer in [`models/transformer_torch.py`](models/transformer_torch.py) and MLPs in [`models/mlp_torch.py`](models/mlp_torch.py).
 - Data loading is handled by [`datasets_torch.py`](datasets_torch.py) with PyTorch DataLoader.
 - Training script: [`train_torch.py`](train_torch.py)
+- Evaluation utilities: [`eval_torch.py`](eval_torch.py) - sample generation, likelihood evaluation, visualization
+- Inference utilities: [`inference_torch.py`](inference_torch.py) - ELBO computation, likelihood profiles
 
 See [PYTORCH_README.md](PYTORCH_README.md) for complete PyTorch documentation.
 

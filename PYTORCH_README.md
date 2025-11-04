@@ -14,6 +14,8 @@ This directory contains the PyTorch implementation of the point cloud galaxy dif
 ### Data and Training
 - `datasets_torch.py` - PyTorch Dataset and DataLoader implementation
 - `train_torch.py` - PyTorch training script
+- `eval_torch.py` - Evaluation utilities (sample generation, likelihood evaluation, visualization)
+- `inference_torch.py` - Inference utilities (ELBO computation, likelihood profiles)
 - `configs/nbody_torch.yaml` - Configuration file for PyTorch training
 
 ## Setup
@@ -72,6 +74,7 @@ The PyTorch implementation preserves the same architecture:
 
 ## Usage Example
 
+### Training
 ```python
 import torch
 from models.diffusion_torch import VariationalDiffusionModel
@@ -109,6 +112,68 @@ samples = generate(
     mask=mask[:24],
     steps=500,
     device='cuda'
+)
+```
+
+### Evaluation
+```python
+from eval_torch import eval_generation, generate_test_samples_from_checkpoint
+import torch
+
+# Load checkpoint and generate samples
+samples = generate_test_samples_from_checkpoint(
+    checkpoint_path='checkpoints/checkpoint_50000.pt',
+    n_samples=10,
+    n_particles=1000,
+    n_features=7,
+    conditioning=None,
+    steps=500,
+)
+
+# Or evaluate with a loaded model
+from eval_torch import eval_generation
+
+eval_generation(
+    vdm=model,
+    state_dict=checkpoint['model_state_dict'],
+    n_samples=10,
+    n_particles=1000,
+    true_samples=true_data,
+    conditioning=None,
+    steps=500,
+    device='cuda',
+)
+```
+
+### Inference (Likelihood Computation)
+```python
+from inference_torch import likelihood, compute_likelihood_profile
+import torch
+
+# Compute likelihood for specific parameters
+x_test = torch.randn(1000, 7)  # Test data
+params = torch.tensor([0.3, 0.8])  # Omega_m, sigma_8
+
+ll = likelihood(
+    vdm=model,
+    x_test=x_test,
+    params=params,
+    steps=10,
+    n_samples=5,
+    device='cuda',
+)
+
+# Compute likelihood profile
+param_values = torch.linspace(0.2, 0.4, 20)
+vals, lls = compute_likelihood_profile(
+    vdm=model,
+    state_dict=checkpoint['model_state_dict'],
+    x_test=x_test,
+    param_name='Omega_m',
+    param_values=param_values,
+    fixed_params={'sigma_8': 0.8},
+    steps=10,
+    device='cuda',
 )
 ```
 
